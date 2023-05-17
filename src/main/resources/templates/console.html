@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>钓红点</title>
+    <link rel="stylesheet" th:href="@{~/css/console.css}">
+    <link href='https://cdn.repository.webfont.com/webfonts/nomal/151102/45904/63f9a7826f50f61028e55ba8.css' rel='stylesheet' type='text/css'/>
+    <link href='http://cdn.repository.webfont.com/webfonts/nomal/151102/45904/63fb13df6f50f611589eaf27.css' rel='stylesheet' type='text/css' />
+    <script th:src="@{~/js/poker.min.js}"></script>
+    <script th:src="@{~/js/vue.js}"></script>
+    <script th:src="@{~/js/axios-0.18.0.js}"></script>
+    <script th:src="@{~/js/jquery.min.js}"></script>
+</head>
+<body>
+<div id="app">
+    <div id="pile">
+        <canvas id="pileImage"></canvas>
+        <scan id="pileNumber">{{52-cardIndex}}</scan>
+    </div>
+
+    <div class="top">
+        <div class="opponent">
+            <div class="score">{{robotScore}}</div>
+            <div id="opponentName" ></div>
+        </div>
+    </div>
+
+    <div id="mainDesktop">
+
+    </div>
+
+    <div id="holeCardsBorder">
+        <div id="holeCards">
+
+        </div>
+    </div>
+    <div id="individual">
+        <div class="score">{{userScore}}</div>
+        <div id="username" th:text="${username}"></div>
+    </div>
+    <button id="d" v-bind:class="{'d-confirm':confirm,'d-unConfirm':!confirm}" @click="playCard">钓</button>
+    <div id="box">
+        <div id="chooseCard"></div>
+        <button id="choose">请选择匹配的卡牌</button>
+    </div>
+    <div id="gameOver">
+    </div>
+    <div id="combatGains">
+        <div id="information">
+            {{userScore}}:{{robotScore}}
+        </div>
+        <div id="buttonLine">
+            <button id="exit" @click="exit">退出游戏</button>
+            <button id="again" @click="again">再来一局</button>
+        </div>
+    </div>
+    <div id="win"></div>
+    <div id="fail"></div>
+    <div id="tips">
+
+    </div>
+
+    <div id="message"></div>
+
+</div>
+<script>
+    axios.defaults.withCredentials = true
+    const app = new Vue({
+        el: "#app",
+        data: {
+            gameId: [[${gameId}]],
+            offensiveName: "", // 先手用户名
+            defensiveName: "ROBOT", // 后手用户名
+            robotTemp: null,
+            userRound: true, // 用户回合
+            choose: false, // 是否正在选择牌(对话框）
+            userScore: 0, // 玩家得分
+            robotScore: 0, // 机器人得分
+            lastPoker: null, // 上一张选中的手牌，用于收回手牌
+            robotCards: [], // 机器人手牌
+            holeCards: [], // 玩家手牌
+            desktop: [], // 桌面牌
+            confirm: false, // 是否已选中手牌
+            confirmCard: null, // 已选中的手牌
+            card: {
+                suit: '',
+                point: ''
+            },
+            cardIndex: 0 // 牌堆顶指向的牌的序号
+        },
+        created() { //完成vue对象实例化时自动执行
+            this.cardIndex = 0
+            this.initCard();
+        },
+        methods: {
+            initCard() { // 初始化摸牌(玩家,机器人,桌面）
+                axios.get("/TouchNumCard/" + this.gameId + "/" + this.cardIndex + "/32").then((res) => {
+                    this.cardIndex = this.cardIndex + 32;
+                    let temp = [];
+                    const arr = res.data;
+                    for (let i = 0; i < 10; i++) {
+                        const suit = arr[i].suit;
+                        const point = arr[i].point;
+                        temp.push({suit: suit, point: point});
+                    }
+                    this.holeCards = temp;
+                    this.refreshCards();
+                    //机器人摸牌
+                    temp = [];
+                    for (let i = 10; i < 20; i++) {
+                        const suit = arr[i].suit;
+                        const point = arr[i].point;
+                        temp.push({suit: suit, point: point});
+                    }
+                    this.robotCards = temp;
+                    temp = [];
+                    const mainDesktop = document.getElementById('mainDesktop')
+                    mainDesktop.replaceChildren(); // 清空桌面
+                    for (let i = 20; i < res.data.length; i++) {
+                        const suit = res.data[i].suit;
+                        const point = res.data[i].point;
+                        const domCanvas = document.createElement('canvas');
+                        const canvas = domCanvas.getContext('2d');
+                        mainDesktop.appendChild(domCanvas)
+                        domCanvas.width = 154
+                        domCanvas.height = 200
+                        canvas.drawPokerCard(10, 10, 180, suit, point);
+                        temp.push({suit: suit, point: point, domCanvas: domCanvas, canvas: canvas});
+                    }
+                    this.desktop = temp;
+                })
+            },
+            refreshCards() { //刷新手牌
+                const list = [];
+                const holeCards = document.getElementById('holeCards')
+                holeCards.replaceChildren(); // 删除所有手牌
+                for (let i = 0; i < this.holeCards.length; i++) {
+                    const suit = this.holeCards[i].suit;
+                    const point = this.holeCards[i].point;
+                    const domCanvas = document.createElement('canvas');
+                    const canvas = domCanvas.getContext('2d');
+                    holeCards.appendChild(domCanvas)
+                    domCanvas.width = 135
+                    domCanvas.height = 180
+                    canvas.drawPokerCard(10, 10, 160, suit, point);
+                    list.push({domCanvas: domCanvas, canvas: canvas, suit: suit, point: point});
+                    domCanvas.addEventListener('click', function () { // 扑克牌点击事件
+                        if (app.lastPoker != null) {
+                            app.lastPoker.canvas.clearRect(0, 0, 135, 180)
+                            app.lastPoker.canvas.drawPokerCard(10, 10, 160, app.lastPoker.suit, app.lastPoker.point);
+                        }
+                        canvas.clearRect(0, 0, 135, 180)
+                        canvas.drawPokerCard(0, 0, 180, suit, point);
+                        app.lastPoker = {canvas: canvas, suit: suit, point: point};
+                        //逻辑处理
+                        app.confirm = true;
+                        app.confirmCard = {suit: suit, point: point, domCanvas: domCanvas}
+                    });
+                }
+                return list;
+            },
+            discard(suit, point) { // 弃牌
+                const mainDesktop = document.getElementById("mainDesktop");
+                const domCanvas = document.createElement('canvas');
+                const canvas = domCanvas.getContext('2d');
+                mainDesktop.appendChild(domCanvas)
+                domCanvas.width = 154
+                domCanvas.height = 200
+                canvas.drawPokerCard(10, 10, 180, suit, point);
+                return {domCanvas: domCanvas, canvas: canvas};
+            },
+            playCard() {
+                if (this.confirm) {// 已选中牌
+                    const holeCards = document.getElementById('holeCards');
+                    holeCards.removeChild(this.confirmCard.domCanvas);
+                    const sc = this.matching(this.confirmCard.suit, this.confirmCard.point);
+                    this.userScore += sc;
+                    if (!this.choose) { // 如果不在选牌
+                        this.onCard(); // 翻牌
+                    }
+                }
+            },
+            matching(suit, point) { // 将牌与桌面牌进行匹配(原子操作）
+                let sc = 0;
+                let list = []; // 可匹配的牌
+                let number = [];
+                if (point === 'j' || point === 'q' || point === 'k' || point === '10') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === point) {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else if (point === 'a') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === '9') {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else if (point === '9') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === 'a') {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (Number(this.desktop[i].point) + Number(point) === 10) {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                }
+                if (list.length === 0) { // 没有匹配，则把牌放上去，不用计分
+                    const ca = this.discard(suit, point);
+                    this.desktop.push({suit: suit, point: point, domCanvas: ca.domCanvas, canvas: ca.canvas});
+                } else if (list.length === 1) { // 有一个匹配，不用选择
+                    const md = document.getElementById("mainDesktop");
+                    if (suit === 'd' || suit === 'h') { // 红牌
+                        sc += this.getScore(point);
+                    }
+                    if (this.desktop[number[0]].suit === 'd' || this.desktop[number[0]].suit === 'h') { // 红牌
+                        sc += this.getScore(this.desktop[number[0]].point);
+                    }
+                    md.removeChild(this.desktop[number[0]].domCanvas);
+                    this.desktop.splice(number[0], 1);
+                } else {
+                    this.choose = true;
+                    const box = document.getElementById("box");
+                    const chooseCard = document.getElementById("chooseCard");
+                    box.style.display = "flex";
+                    chooseCard.replaceChildren();
+                    for (let i = 0; i < number.length; i++) {
+                        const domCanvas = document.createElement('canvas');
+                        const canvas = domCanvas.getContext('2d');
+                        chooseCard.appendChild(domCanvas)
+                        domCanvas.width = 135
+                        domCanvas.height = 180
+                        canvas.drawPokerCard(10, 10, 160, this.desktop[number[i]].suit, this.desktop[number[i]].point);
+                        domCanvas.addEventListener('click', function () { // 扑克牌点击事件
+                            // app.userRound = true;
+                            let sc = 0;
+                            const md = document.getElementById("mainDesktop");
+                            if (suit === 'd' || suit === 'h') { // 红牌
+                                sc += app.getScore(point);
+                            }
+                            if (app.desktop[number[i]].suit === 'd' || app.desktop[number[i]].suit === 'h') { // 红牌
+                                sc += app.getScore(app.desktop[number[i]].point);
+                            }
+                            md.removeChild(app.desktop[number[i]].domCanvas);
+                            app.desktop.splice(number[i], 1);
+                            box.style.display = "none";
+                            app.userScore += sc;
+                            app.choose = false;
+                            if (!app.userRound) { // 用户回合已经结束
+                                app.robotRound();
+                            } else {
+                                app.onCard();
+                            }
+                        })
+                    }
+                }
+                return sc;
+            },
+            robotTest(suit, point) { // 将牌与桌面牌进行匹配测试
+                let sc = 0; // 测试得分
+                let list = []; // 可匹配的牌
+                let number = [];
+                if (point === 'j' || point === 'q' || point === 'k' || point === '10') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === point) {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else if (point === 'a') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === '9') {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else if (point === '9') {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (this.desktop[i].point === 'a') {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < this.desktop.length; i++) {
+                        if (Number(this.desktop[i].point) + Number(point) === 10) {
+                            list.push({suit: this.desktop.suit, point: this.desktop.point});
+                            number.push(i);
+                        }
+                    }
+                }
+                if (list.length > 0) { // 有匹配则计分（默认匹配相同点数的第一个）
+                    if (suit === 'd' || suit === 'h') { // 红牌
+                        sc += this.getScore(point);
+                    }
+                    if (this.desktop[number[0]].suit === 'd' || this.desktop[number[0]].suit === 'h') { // 红牌
+                        sc += this.getScore(this.desktop[number[0]].point);
+                    }
+                } else {
+                    sc = -1; // 无匹配
+                }
+                return {sc: sc, dom: number[0]};
+            },
+            onCard() { // 翻开牌堆顶的牌并进行匹配(只用于用户）
+                //翻牌
+                if (this.userRound) {
+                    axios.get("/touchCard/" + this.gameId + "/" + this.cardIndex).then((res) => {
+                        this.cardIndex++;
+                        app.userRound = false; // 回合结束
+                        const card = res.data;
+                        const pile = document.getElementById('pileImage');
+                        const pileImage = pile.getContext('2d');
+                        pileImage.drawPokerCard(20, 10, 140, card.suit, card.point);
+                        let sc = this.matching(card.suit, card.point);
+                        this.userScore += sc;
+                        // window.alert("你翻出了【" + this.getColours(card.suit) + card.point + "】");
+                        this.showTip("你翻出了【" + this.getColours(card.suit) + card.point + "】");
+                        if (this.cardIndex === 52) { // 牌堆用完了
+                            this.gameOver();
+                        }
+                        if (!this.choose) {// 如果不在选牌或选牌完了
+                            this.robotRound();
+                        }
+                    })
+                }
+            },
+            getScore(point) { // 计算牌的分数
+                if (point === 'a' || point === 'j' || point === 'q' || point === 'k') {
+                    return 10;
+                } else {
+                    return Number(point);
+                }
+            },
+            robotRound() { // 机器人回合
+                // alert("robotRound")
+                axios.get("/touchCard/" + this.gameId + "/" + this.cardIndex).then((res) => {
+                    this.cardIndex++;
+                    let maxScore = -1;
+                    let maxi = -1; // 手牌序号
+                    let maxD = -1;//对应桌面匹配的牌的序号
+                    let temp = 0;
+                    for (let i = 0; i < this.robotCards.length; i++) {
+                        let ret = this.robotTest(this.robotCards[i].suit, this.robotCards[i].point);
+                        temp = ret.sc;
+                        if (temp > maxScore) {
+                            maxi = i;
+                            maxScore = temp;
+                            maxD = ret.dom;
+                        }
+                    }
+                    // alert(maxD)
+                    if (maxScore >= 0) { // 有匹配，需消牌(0也是有匹配）
+                        // alert(this.desktop[maxD].suit+"-"+this.desktop[maxD].point);
+                        if (maxD >= 0) {
+                            this.showTip("机器人打出【" + this.getColours(this.robotCards[maxi].suit) + this.robotCards[maxi].point + "】,获得" + maxScore + "分")
+                            // window.alert("机器人打出【" + this.getColours(this.robotCards[maxi].suit) + this.robotCards[maxi].point + "】,获得" + maxScore + "分");
+                            // alert("maxD!=null")
+                            const md = document.getElementById("mainDesktop");
+                            md.removeChild(app.desktop[maxD].domCanvas);
+                            // alert("removeChild is OK")
+                            this.desktop.splice(maxD, 1);
+                            this.robotScore += maxScore;
+                        }
+                    } else { // 无匹配，需弃牌（随机弃牌）
+                        const s = this.robotCards[0].suit;
+                        const p = this.robotCards[0].point;
+                        const ca = this.discard(s, p);
+                        this.desktop.push({suit: s, point: p, domCanvas: ca.domCanvas, canvas: ca.canvas});
+                        // window.alert("机器人打出【" + this.getColours(s) + p + "】,获得0分");
+                        this.showTip("机器人打出【" + this.getColours(s) + p + "】,获得0分")
+                    }
+                    this.robotCards.splice(0, 1);
+                    //翻牌
+                    const pile = document.getElementById('pileImage');
+                    const pileImage = pile.getContext('2d');
+                    pileImage.drawPokerBack(20, 10, 140, '#41753F', '#1f4f1e');
+                    // alert("翻牌")
+                    const ret = this.robotTest(res.data.suit, res.data.point);
+                    const s = ret.sc;
+                    const d = ret.dom;
+                    if (s >= 0) { // 有匹配
+                        // window.alert("机器人翻出【" + this.getColours(res.data.suit) + res.data.point + "】,获得" + s + "分")
+                        this.showTip("机器人翻出【" + this.getColours(res.data.suit) + res.data.point + "】,获得" + s + "分");
+                        this.robotScore += s;
+                        const md = document.getElementById("mainDesktop");
+                        md.removeChild(app.desktop[d].domCanvas);
+                        this.desktop.splice(d, 1);
+                    } else { // 无匹配
+                        // window.alert("机器人翻出【" + this.getColours(res.data.suit) + res.data.point + "】,获得0分")
+                        this.showTip("机器人翻出【" + this.getColours(res.data.suit) + res.data.point + "】,获得0分");
+                        let ca = this.discard(res.data.suit, res.data.point);
+                        this.desktop.push({suit: res.data.suit, point: res.data.point, domCanvas: ca.domCanvas, canvas: ca.canvas});
+                    }
+                    if (this.cardIndex === 52) { // 游戏结束
+                        this.gameOver();
+                    }
+                    this.userRound = true;
+                })
+            },
+            gameOver() { // 游戏结束
+                axios.get("/gameOver/" + this.gameId + "/" + this.userScore + "/" + this.robotScore).then((res) => {
+                    if (res.data) {
+                        const gameOver = document.getElementById("gameOver");
+                        const combatGains = document.getElementById("combatGains");
+                        gameOver.style.display = "flex";
+                        setTimeout(() => {
+                            gameOver.style.display = "none";
+                            combatGains.style.display = "flex";
+                            if (this.userScore > this.robotScore) { // 胜利
+                                const win = document.getElementById("win");
+                                win.style.display = "flex";
+                                setTimeout(() => {
+                                    win.style.display = "none";
+                                }, 3000)
+                            } else { // 失败
+                                const fail = document.getElementById("fail");
+                                fail.style.display = "flex";
+                                setTimeout(() => {
+                                    fail.style.display = "none";
+                                }, 2000)
+                            }
+                        }, 2000)
+                    }
+                })
+            },
+            getColours(ch) {
+                if (ch === 'h') {
+                    return "♥";
+                }
+                if (ch === 'd') {
+                    return "♦";
+                }
+                if (ch === 's') {
+                    return "♠";
+                }
+                if (ch === 'c') {
+                    return "♣";
+                }
+            },
+            again(){
+                window.location.href = "http://localhost:8080/consoleGame"+window.location.search;
+            },
+            exit(){
+                window.location.href = 'http://localhost:8080/index';
+            },
+            showTip(message){
+                const msg = document.getElementById("message");
+                const txt = document.createElement("span");
+                txt.textContent = message;
+                msg.appendChild(txt);
+                msg.scrollTop = msg.scrollHeight;
+                //动态显示消息
+                const tips = document.getElementById("tips");
+                const tip = document.createElement("div");
+                tips.appendChild(tip);
+                tip.className = "tip";
+                tip.textContent = message;
+                const l = tips.children;
+                let cnt = 0;
+                for (let i = 0; i < l.length; i++) {
+                    if(l[i].style.display === "block"){
+                        cnt++;
+                    }
+                }
+                setTimeout(()=>{
+                    tip.style.display = "block";
+                    setTimeout(()=>{
+                        tip.style.display = "none";
+                    },4000)
+                },cnt * 2000)
+            }
+        }
+    })
+    //选牌对话框
+    const box = document.getElementById('box');
+    box.onmousedown = function (e) {
+        e = e || window.event;
+        // 盒子的位置
+        var x = getPage(e).pageX - box.offsetLeft;
+        var y = getPage(e).pageY - box.offsetTop;
+        document.onmousemove = function (e) {
+            e = e || window.event;
+            box.style.left = getPage(e).pageX - x + 'px';
+            box.style.top = getPage(e).pageY - y + 'px';
+        }
+    }
+    document.onmouseup = function () {
+        document.onmousemove = null;
+    }
+    //战绩对话框
+    const combatGains = document.getElementById('combatGains');
+    combatGains.onmousedown = function (e) {
+        e = e || window.event;
+        // 盒子的位置
+        var x = getPage(e).pageX - combatGains.offsetLeft;
+        var y = getPage(e).pageY - combatGains.offsetTop;
+        document.onmousemove = function (e) {
+            e = e || window.event;
+            combatGains.style.left = getPage(e).pageX - x + 'px';
+            combatGains.style.top = getPage(e).pageY - y + 'px';
+        }
+    }
+    document.onmouseup = function () {
+        document.onmousemove = null;
+    }
+    const pile = document.getElementById('pileImage');
+    const pileImage = pile.getContext('2d');
+    pileImage.drawPokerBack(20, 10, 140, '#41753F', '#1f4f1e');
+
+    // 获取鼠标在页面的位置，处理浏览器兼容性
+    function getPage(e) {
+        const pageX = e.pageX || e.clientX + getScroll().scrollLeft;
+        const pageY = e.pageY || e.clientY + getScroll().scrollTop;
+        return {
+            pageX: pageX,
+            pageY: pageY
+        }
+    }
+</script>
+</body>
+</html>

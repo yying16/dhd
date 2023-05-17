@@ -1,0 +1,293 @@
+body {
+    background-image: url("../image/background.jpg");
+    background-size: 100%;
+    height: 100%;
+}
+
+.top {
+    width: auto;
+    height: 160px;
+}
+
+.opponent {
+    width: 290px;
+    height: 100px;
+    margin-left: 35%;
+    display: inline-block;
+    background-image: url("../image/opponent.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#pile {
+    width: 300px;
+    height: 160px;
+    position: absolute;
+    right: 10px;
+    background: #41753F;
+    border-radius: 40px;
+}
+
+#pileNumber {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    font-size: 64px;
+    width: 50px;
+    height: 50px;
+    margin-top: 40px;
+    position: absolute;
+    right: 60px;
+}
+
+#mainDesktop {
+    width: auto;
+    height: 500px;
+    align-content: center;
+    margin-top: 20px;
+}
+
+#individual {
+    width: 160px;
+    height: 210px;
+    background: #41753F;
+    border-radius: 20px;
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    align-content: center;
+}
+
+.score {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    margin-top: 16px;
+    font-size: 60px;
+    color: #184618;
+    text-align: center;
+}
+
+#opponentName{
+    margin-top: 10px;
+    margin-left: 38%;
+    font-size: 26px;
+    color: white;
+}
+
+#username{
+    margin-top: 30px;
+    font-size: 26px;
+    color: white;
+    text-align: center;
+}
+
+#holeCardsBorder {
+    width: 1450px;
+    height: 210px;
+    margin-left: 180px;
+    position: absolute;
+    border-radius: 20px;
+    border-style: dashed;
+    bottom: 10px;
+    align-content: center;
+}
+
+#holeCards {
+    width: 1440px;
+    height: 200px;
+    margin: 5px;
+    bottom: 10px;
+    align-content: center;
+}
+
+#holeCards canvas {
+    margin: 4px;
+}
+
+#d {
+    font-size: 120px;
+    font-family: 'cyjianxk352c5f9c5024e3e';
+    /*color: #184618;*/
+    width: 200px;
+    height: 200px;
+    background: #41753F;
+    border-radius: 100px;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    align-content: center;
+}
+
+.d-confirm {
+    color: #d3cf63;
+}
+
+.d-unConfirm {
+    color: #184618;
+}
+
+.d-confirm:hover {
+    transition: font-size 0.4s ease-in-out;
+    font-size: 160px;
+}
+
+.d-confirm:active {
+    color: #7c7c7c;
+}
+
+/*对话框*/
+#box {
+    color: #fff;
+    width: 600px;
+    height: 300px;
+    top: 44%;
+    left: 30%;
+    background-color: #263f1d80;
+    display: none;
+    flex-direction: column;
+    border-radius: 10px;
+    align-items: center;
+    box-sizing: border-box;
+    position: absolute;
+    cursor: move;
+}
+#chooseCard{
+    width: auto;
+    height: 260px;
+    margin: 20px 20px;
+}
+#choose {
+    color: #184618;
+    font-size:24px;
+    position: absolute;
+    width: 300px;
+    height: 40px;
+    background: #8eda8e;
+    margin: 0 auto;
+    left: 150px;
+    bottom: 20px;
+    border-radius: 10px;
+}
+#chooseCard canvas{
+    opacity: 0.75;
+}
+#gameOver{
+    background-image: url("../image/gameover.gif");
+    background-size: 100%;
+    width: 600px;
+    height: 600px;
+    top: 10%;
+    left: 30%;
+    display: none;
+    position: absolute;
+}
+
+#combatGains{ /*战绩面板*/
+    background-image: url("../image/combatGains.png") ;
+    background-size: 100%;
+    width: 800px;
+    height: 500px;
+    top: 15%;
+    left: 24%;
+    position: absolute;
+    display: none;
+}
+#information{
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    color: red;
+    font-family: 'cyjianxk3531eee76924e3e', cursive;
+    font-size: 92px;
+    margin-left: 320px;
+    margin-top: 160px;
+}
+#exit{
+    font-family: 楷体, serif;
+    padding:40px;
+    position: absolute;
+    color: #184618;
+    font-size: 32px;
+    background: url("../image/button.png") center no-repeat;
+    background-size: 100%;
+    border:none;
+    left: 260px;
+    bottom: 80px;
+}
+#again{
+    font-family: 楷体, serif;
+    position: absolute;
+    color: #184618;
+    font-size: 32px;
+    padding:40px;
+    background: url("../image/button.png") center no-repeat;
+    background-size: 100%;
+    border:none;
+    left: 500px;
+    bottom: 80px;
+}
+#win{
+    background-image: url("../image/win.gif");
+    background-size: 100%;
+    width: 400px;
+    height: 400px;
+    top: 12%;
+    left: 36%;
+    position: absolute;
+    display: none;
+}
+#fail{
+    background-image: url("../image/fail.gif");
+    background-size: 100%;
+    width: 460px;
+    height: 460px;
+    top: 14%;
+    left: 34%;
+    position: absolute;
+    display: none;
+}
+#tips{
+    width: 840px;
+    height: 180px;
+    background: #00000000;
+    position: absolute;
+    top: 12%;
+    left: 24%;
+}
+
+.tip{
+    background: url("../image/tip.png") center no-repeat;
+    background-size: 100% 100%;
+    width: 840px;
+    height: 60px;
+    text-align: center;
+    font-size: 18px;
+    padding-top: 32px;
+    color: rgba(14, 131, 122);
+    animation:tip 4s 1;
+    display: none;
+}
+@keyframes tip{
+    0%{opacity: 0;}
+    30%{opacity: 1;}
+    80%{opacity: 1;}
+    100%{opacity: 0;}
+}
+
+#message{
+    width: 400px;
+    height: 160px;
+    position: absolute;
+    right: 20px;
+    bottom: 30%;
+    overflow-y: auto;
+}
+#message span{
+    color: white;
+    font-size: 20px;
+    display: block;
+}

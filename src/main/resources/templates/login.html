@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录界面</title>
+    <link rel="stylesheet" th:href="@{~/css/login.css}">
+</head>
+
+<body>
+<div class="loginBox">
+    <h2>登录界面</h2>
+    <form th:action="@{/toLogin}" th:object="${user}" method="post">
+        <div class="item">
+            <input type="text" name="account" required>
+            <label>账号</label>
+        </div>
+        <div class="item">
+            <input type="password" name="password" required>
+            <label>密码</label>
+            <div class="warn">[[${wrong}]]</div>
+        </div>
+        <button class="btn" type="submit">登录</button>
+        <a class="btn" href="http://localhost:8080/register">切换到注册界面</a>
+    </form>
+</div>
+</body>
+</html>

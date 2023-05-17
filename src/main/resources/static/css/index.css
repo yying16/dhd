@@ -1,0 +1,83 @@
+body{
+    background-color: #0c1622;
+}
+video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -9999;
+}
+#choice{
+    width: 420px;
+    height: 600px;
+    top: 120px;
+    right: 80px;
+    position: absolute;
+}
+#choice button{
+    color: #323232;
+    opacity: 0.9;
+    width: 320px;
+    height: 120px;
+    background: url("../image/choose.png")  center no-repeat;
+    border:none;
+    font-size: 30px;
+    font-family: ¿¬Ìå, cursive;
+}
+#box{
+    background-image: url("../image/combatGains.png") ;
+    background-size: 100%;
+    width: 1200px;
+    height: 640px;
+    top: 6%;
+    left: -300%;
+    position: absolute;
+    display: none;
+}
+
+#username{
+    width: auto;
+    height: 60px;
+    margin-top: 120px;
+    font-size: 28px;
+    color: darkred;
+    text-align: center;
+    font-family: ¿¬Ìå, serif;
+}
+#history{
+    width: 800px;
+    height: 360px;
+    margin-left: 260px;
+}
+
+#close {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    background-color: #f5ecdd;
+    position: absolute;
+    top: 50px;
+    right: 5px;
+    font-weight: normal;
+    display: block;
+    width: 50px;
+    height: 25px;
+    line-height: 25px;
+    text-align: center;
+    border-radius: 20px;
+    color: #4f4f4f;
+}
+#rate{
+    top: 546px;
+    left: 800px;
+    width: 320px;
+    height: 140px;
+    font-size: 36px;
+    color: #4f4f4f;
+    position: absolute;
+}

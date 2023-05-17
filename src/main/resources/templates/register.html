@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册界面</title>
+    <link rel="stylesheet" th:href="@{~/css/register.css}">
+</head>
+
+<body>
+<div class="loginBox">
+    <h2>注册界面</h2>
+    <form th:action="@{/checkUser}" th:object="${user}" method="post">
+        <div class="item">
+            <input type="text" name="account" required>
+            <label>账号</label>
+            <span class="warn" th:if="${#fields.hasErrors('account')}" th:errors="*{account}">账号格式有误</span>
+        </div>
+        <div class="item">
+            <input type="password" name="password" required>
+            <label>密码</label>
+            <span class="warn" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">密码格式有误</span>
+        </div>
+        <div class="item">
+            <input type="text" name="username" required>
+            <label>用户名</label>
+            <span class="warn" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">用户名格式有误</span>
+        </div>
+        <div class="item">
+            <input type="text" name="telephone" required>
+            <label>电话号码</label>
+            <span class="warn" th:if="${#fields.hasErrors('telephone')}" th:errors="*{telephone}">手机号码格式有误</span>
+        </div>
+        <div class="item">
+            <input type="text" name="email" required>
+            <label>电子邮箱</label>
+            <span class="warn" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">邮箱格式有误</span>
+        </div>
+        <button class="btn">注册</button>
+        <a class="btn"href="http://localhost:8080/login">切换到登录界面</a>
+    </form>
+</div>
+</body>
+</html>

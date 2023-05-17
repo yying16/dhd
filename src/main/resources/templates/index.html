@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>钓红点</title>
+    <link rel="stylesheet" th:href="@{/css/index.css}">
+    <script th:src="@{/js/vue.js}"></script>
+    <script th:src="@{/js/axios-0.18.0.js}"></script>
+    <script th:src="@{/js/jquery.min.js}"></script>
+    <link rel="stylesheet" th:href="@{/plugins/elementui/index.css}">
+    <script th:src="@{/plugins/elementui/index.js}"></script>
+</head>
+<body>
+<video id="v1" autoplay muted loop style="width: 100%">
+    <source th:src="@{/video/bac.mp4}">
+</video>
+<div id="choice">
+    <button id="console" @click="console">人机对战</button>
+    <button id="online" @click="online">联机匹配</button>
+    <button id="detail" @click="detail">个人战绩</button>
+    <button id="exit" @click="exit">退出游戏</button>
+    <div id="box">
+        <div id="rate"></div>
+        <strong id="close" @click="close">关闭</strong>
+        <div id="username">{{username}}</div>
+        <el-card id="history">
+            <el-scrollbar style="height:360px;width: 800px"> <!-- 滚动条 -->
+                <!-- 注意需要给 el-scrollbar 设置高度，判断是否滚动是看它的height判断的 -->
+                <el-row style="height: 360px;width: 800px;"><!--可显示区域-->
+                    <el-table :data="combat">
+                        <el-table-column prop="opponent" label="对手" width="180"></el-table-column>
+                        <el-table-column prop="result" label="胜负" width="180"></el-table-column>
+                        <el-table-column prop="score" label="比分" width="180"></el-table-column>
+                        <el-table-column prop="time" label="时间" width="180"></el-table-column>
+                    </el-table>
+                </el-row>
+            </el-scrollbar>
+        </el-card>
+    </div>
+</div>
+<script>
+    const choice = new Vue({
+        el: "#choice",
+        data: {
+            onlineUser: null, // 当前登录用户
+            username: "",
+            combat: [],
+        },
+        created() {
+            this.InitUserInfo();
+        },
+        methods: {
+            //初始化个人信息，将登录的账号信息映射到前端
+            InitUserInfo() {
+                axios.get("/infos/getMyInfo").then((res) => {
+                    this.onlineUser = res.data;
+                    this.username = this.onlineUser.username;
+                    this.$message.success('欢迎回来~' + this.onlineUser.username);
+                });
+            },
+            console() {
+                window.location.href = "http://localhost:8080/consoleGame?account=" + this.onlineUser.account;
+            },
+            online() {
+                this.$message("功能尚未开放，敬请期待", "Warn");
+            },
+            detail() {
+                axios.get("/getRecord/" + this.onlineUser.account).then(res => {
+                    this.combat = res.data;
+                    let a = 0;
+                    for (let i = 0; i < this.combat.length; i++) {
+                        if (this.combat[i].result === "胜利") {
+                            a++;
+                        }
+                    }
+                    let r = a*100/this.combat.length;
+                    const rate = document.getElementById("rate");
+                    rate.textContent = "胜率:"+r.toFixed(2)+"%";
+                }).finally(() => {
+                    const box = document.getElementById("box");
+                    box.style.display = "block";
+                })
+            },
+            exit() {
+                this.$confirm("确定退出游戏吗", "Tips", {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'success'
+                    /*无论是取消还是确定,点击后都是退出*/
+                }).then(() => {
+                    window.location.href = 'http://localhost:8080/logout';//退出操作
+                });
+            },
+            close() {
+                const box = document.getElementById("box");
+                box.style.display = "none";
+            }
+        }
+    })
+
+    const box = document.getElementById('box');
+    box.onmousedown = function (e) {
+        e = e || window.event;
+        // 盒子的位置
+        var x = getPage(e).pageX - box.offsetLeft;
+        var y = getPage(e).pageY - box.offsetTop;
+        document.onmousemove = function (e) {
+            e = e || window.event;
+            box.style.left = getPage(e).pageX - x + 'px';
+            box.style.top = getPage(e).pageY - y + 'px';
+        }
+    }
+    document.onmouseup = function () {
+        document.onmousemove = null;
+    }
+
+</script>
+</body>
+</html>
